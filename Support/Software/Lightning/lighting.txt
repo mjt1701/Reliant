@@ -1,0 +1,62 @@
+/*
+ * 
+ * Lightning (Andrew Tuline)  https://github.com/atuline/FastLED-Demos/blob/master/lightnings/lightnings.ino 
+ * 
+ */
+
+#include "FastLED.h" // FastLED library. Please use the latest version
+
+// Fixed definitions. Cannot be changed interactively
+#define LED_DATA 3 // Data pin
+#define LED_CLOCK 4 // Clock pin
+#define COLOR_ORDER BGR // GRB for WS2812 and BGR for APA102
+#define LED_TYPE APA102 // Using APA102, WS2812, WS2801 - don't forget to change LEDS.addLeds
+#define NUM_LEDS 144 // Number of LEDs
+
+// Global variables. Can be changed interactively
+uint8_t max_bright = 255; // Overall brightness
+
+struct CRGB leds[NUM_LEDS]; // Initialise LED array
+
+uint8_t frequency = 40; // Controls the interval between strikes
+uint8_t flashes = 7; // The upper limit of flashes per strike
+unsigned int dimmer = 1;
+uint8_t ledstart; // Starting location of flash
+uint8_t ledlen; // Length of flash
+
+void setup() {
+  
+  delay(1000);
+  
+  LEDS.addLeds<LED_TYPE, LED_DATA, LED_CLOCK, COLOR_ORDER>(leds, NUM_LEDS); // For WS2801 or APA102
+  
+  FastLED.setBrightness(max_bright);
+  
+}
+
+
+void loop() {
+  
+  ledstart = random8(NUM_LEDS); // Determine starting location of flash
+  ledlen = random8(NUM_LEDS-ledstart); // Determine length of flash (not to go beyond NUM_LEDS-1)
+  
+  for (int flashCounter = 0; flashCounter < random8(2,flashes); flashCounter++) {
+    if(flashCounter == 0) dimmer = 6; // The brightness of the leader is scaled down by a factor of 6
+    else dimmer = random8(1,4); // Return strokes are brighter than the leader
+    
+    fill_solid(leds+ledstart,ledlen,CHSV(255, 0, 255/dimmer));
+    FastLED.show(); // Show a flash
+    delay(random8(3,11)); // Each flash only lasts 3-11 milliseconds
+    
+    fill_solid(leds+ledstart,ledlen,CHSV(255,0,0)); // Clear the section of LEDs
+    FastLED.show();
+    
+    if (flashCounter == 0) delay (150); // Longer delay until next flash after the leader
+    
+    delay(50+random8(100)); // Shorter delay between strokes
+    
+  }
+  
+  delay(random8(frequency)*100); // Delay between strikes
+  
+}

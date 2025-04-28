@@ -1,0 +1,6 @@
+{
+    "configuration": "cpu=atmega328",
+    "board": "arduino:avr:nano",
+    "port": "COM4",
+    "sketch": "relient_sheilds_rev4_1.ino"
+}

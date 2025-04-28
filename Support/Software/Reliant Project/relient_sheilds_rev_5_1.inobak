@@ -1,0 +1,339 @@
+/*
+ NN   N  EEEEE  IIIII  L
+ N N  N  E        I    L
+ N  N N  EEEE     I    L
+ N  N N  E        I    L
+ N   NN  EEEEE  IIIII  LLLLL
+
+  Relent shields
+  Lights set of WS2812 RGBW LEDs to re-enact the relient shields going down
+  My Matt Troha
+
+  Revision History
+  Rev 1.0
+  set up software to perform basic light action of relient shields going down
+  all lights on, then one by one they turn off
+
+  Rrev 1.1
+  updated to run on sumulator wokwi.com
+  minor updates
+
+  Renamed to include both light and sound
+  Rev1.0
+
+  Rev2.0 changed to Case statement for main flow
+
+  Rev3.0 replaced mode state with enum paradigm
+  Rev3.1 split case 4 into two separate cases; including making some of it functions
+  Rev3.2 clean up variables etc from 3.x, add dfPlayer intialize delay
+
+  Rev 4.1 add  ship lights; (still need to determine color etc)  this adds new shieldLEDstrip instance and renames LED variables  etc
+	  - also need to refactors functions to reference variblae for the LED objects
+
+  Rev 5.1
+  Obtained new sound files from Neil, now can rework cases to fit op sequence
+  set volume
+
+
+*/
+
+#include "Arduino.h"
+#include "SoftwareSerial.h"		 //SOftware Serial Bus to support DFPlayer
+#include "DFRobotDFPlayerMini.h" //DFRobot DFPlayer Library
+#include <Adafruit_NeoPixel.h>	 //Adafruit NeoPixel Library
+
+const int rxPin = 10;			  // Define Arduino connection pin fo software serial rx
+const int txPin = 11;			  // Define Arduino connection pin fo software serial tx
+const int buttonPin = 6;		  // Define Arduino connection pin for button
+const bool buttonActivated = LOW; // Indicate that button pushed is HIGH
+const int volume = 20;			  // Sound volume for dfPlayer From 0 to 30
+
+// Shield LEDs
+const int shieldDataPin = 3;		 // Define Arduino connection pin for shields LED data
+const int shieldLEDnum = 8;			 // Define the total number of shields LEDs
+const int shieldLEDinGroup = 1;		 // Define nubmer of shield LEDs in a group  //todo not used
+const int shieldMaxBright = 32;		 // Define maximum shield LED brightness
+const uint8_t shieldRedValue = 0;	 // Define the shield LED color RGBW
+const uint8_t shieldGreenValue = 0;	 // Define the shield LED color RGBW
+const uint8_t shieldBlueValue = 255; // Define the shield LED color RGBW
+const uint8_t shieldWhiteValue = 0;	 // Define the shield LED color RGBW
+
+// Ship LEDs
+const int shipDataPin = 4;			// Define Arduino connection pin for Ship LED data
+const int shipLEDnum = 8;			// Define the total number of Ship LEDs
+const int shipLEDinGroup = 1;		// Define nubmer of Ship LEDs in a group    //todo not used
+const int shipMaxBright = 32;		// Define maximum Ship LED brightness  //todo combine shield and ship ??
+const uint8_t shipRedValue = 0;		// Define the Ship LED color RGBW
+const uint8_t shipGreenValue = 0;	// Define the Ship LED color RGBW
+const uint8_t shipBlueValue = 0;	// Define the Ship LED color RGBW
+const uint8_t shipWhiteValue = 255; // Define the Ship LED color RGBW
+
+// mp3 file ID on card
+const uint8_t mp3File1 = 1; // mp3 file number of intro
+const uint8_t mp3File2 = 2; // mp3 file number of shields going up
+const uint8_t mp3File3 = 3; // mp3 file number of shields going down
+const uint8_t mp3File4 = 4; // mp3 file number of full scene
+const uint8_t mp3File5 = 5; // mp3 file number of  // todo not used
+const uint8_t mp3File6 = 6; // mp3 file number of  // todo not used
+
+// Audio timing data
+const unsigned long ledOffDelay = 1000;	  // Time until next LED goes on or off
+const unsigned long mp3WaitTime = 483000; // Amount of time to wait from start of mp3-2 and shields go down
+const int afterDelay = 4000;
+const unsigned long runOutMP3s2Time = 17000; // Time from end of shields goind to end of mp3-2
+const unsigned long resetDelay = 5000;		 // Time to delay after mp3-2 ends and retart loop
+
+// todo not used const unsigned long mp3File1Delay = xxx;   // Trigger delay after File start for next action
+const unsigned long mp3File2Delay = 5000;	// Trigger delay after File start for next action
+const unsigned long mp3File3Delay = 6000;	// Trigger delay after File start for next action
+const unsigned long mp3File4_1Delay = 3000; // Trigger delay after File start for next action
+const unsigned long mp3File4_2Delay = 4000; // Trigger delay after File start for next action
+
+unsigned long mp3s1Time;	   // Time that mp3 file 1 starts  // ? needed  replaced by imm above
+unsigned long mp3s2Time;	   // Time that mp3 file 2 starts   // ? needed replaced by imm above
+int ledNextTurnOffNum = 0;	   // LED number to turn off in shielddown sequence
+unsigned long buttonPressTime; // Time when button pressed
+unsigned long ledOffTime;	   // Time when previous LED turned off
+unsigned long mp3s2OutTime;	   // ? needed
+unsigned long runOutTime;	   // ? needed
+
+enum shieldStates
+{
+	initialState,	 // 0 mp3-1 playing
+	shieldsUp,		 // 1 mp3-2 playing and shields go up
+	shieldsDrop,	 // 2 mp3-3 playing and shields going down
+	fullScene,		 // 3 last light is out, mp3-2 still playing (or change to nothing and handle after mp3 is done)
+	waitToStartAgain // 4 reset and start over
+};
+
+enum shieldStates shldState; // = initialState;
+
+SoftwareSerial mySoftwareSerial(rxPin, txPin);
+DFRobotDFPlayerMini myDFPlayer;
+
+Adafruit_NeoPixel shieldLEDstrip = Adafruit_NeoPixel(shieldLEDnum, shieldDataPin, NEO_GRBW + NEO_KHZ800); // shields LED object
+Adafruit_NeoPixel shipLEDstrip = Adafruit_NeoPixel(shipLEDnum, shipDataPin, NEO_GRBW + NEO_KHZ800);		  // Ship LED object
+
+void setup()
+{
+	pinMode(buttonPin, INPUT);
+	digitalWrite(buttonPin, HIGH); // turn on internal resistor
+
+	mySoftwareSerial.begin(9600);
+	delay(100); // dfPlayer needs a little time to initialize
+
+	// todo remove or comment out Serial Monitor outputs
+	Serial.begin(115200); // Setup Serial Monitor
+
+	Serial.println("Starting Program");
+	Serial.print(" !myDFPlayer.begin(mySoftwareSerial): ");
+	Serial.println(!myDFPlayer.begin(mySoftwareSerial));
+
+	if (!myDFPlayer.begin(mySoftwareSerial))
+	{ // Use softwareSerial to communicate with dfPlayer
+		// change this to flash the lights
+		Serial.println(F("Unable to begin:"));
+		Serial.println(F("1.Please recheck the connection!"));
+		Serial.println(F("2.Please insert the SD card!"));
+		while (true)
+			;
+	}
+
+	// Initialize the LEDs and dfPlayer,  turn each on and off
+	myDFPlayer.volume(volume); // Set volume
+
+	shieldLEDstrip.begin();
+	shipLEDstrip.begin();
+
+	shieldLEDstrip.setBrightness(shieldMaxBright);
+	shieldLEDstrip.fill(shieldLEDstrip.Color(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue), 0, shieldLEDnum);
+	shieldLEDstrip.show();
+	delay(1000);
+
+	shieldLEDstrip.fill(shieldLEDstrip.Color(0, 0, 0, 0), 0, shieldLEDnum);
+	shieldLEDstrip.show();
+
+	shipLEDstrip.setBrightness(shipMaxBright);
+	shipLEDstrip.fill(shipLEDstrip.Color(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue), 0, shipLEDnum);
+	shipLEDstrip.show();
+	delay(1000);
+
+	shipLEDstrip.fill(shipLEDstrip.Color(0, 0, 0, 0), 0, shipLEDnum);
+	shipLEDstrip.show();
+}
+
+// ********************************************* LOOP starts
+void loop()
+{
+
+	Serial.print(" Case number: ");
+	Serial.println(shldState);
+
+	switch (shldState)
+	{
+
+	case initialState: // just turned on; turn on mp3-1, turn on ship lights
+
+		if (digitalRead(buttonPin) == buttonActivated) // Look for button press  ----first time
+		{
+			//  turn ship leds on, play file 1
+
+			shipLEDstrip.fill(shipLEDstrip.Color(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue), 0, shipLEDnum);
+			shipLEDstrip.show();
+			myDFPlayer.playMp3Folder(mp3File1);
+			shldState = shieldsUp;
+		}
+		break;
+
+	case shieldsUp: // button hit to start; play file 2, wait for time to start shields up
+					// todo does button press need to wait for mp3-1 to complete?
+
+		Serial.print("  ");
+		Serial.print(digitalRead(buttonPin));
+		Serial.print("  ");
+		Serial.print(buttonActivated);
+
+		//	delay(40000);
+
+		if (digitalRead(buttonPin) == buttonActivated) // Look for button press  ----second time
+		{
+			buttonPressTime = millis();
+			myDFPlayer.playMp3Folder(mp3File2);
+
+			Serial.print("  ");
+			Serial.print(buttonPressTime);
+
+			//	delay(40000);
+
+			break;
+		}
+
+		Serial.println(" millis() | buttonpresstime | millis() - buttonPressTime: ");
+		Serial.print(millis());
+		Serial.print("  ");
+		Serial.print(buttonPressTime);
+		Serial.print("  ");
+		Serial.println(millis() - buttonPressTime);
+
+		if (millis() - buttonPressTime < mp3File2Delay)
+		{
+			// turn shield leds on
+			// todo need to know if shields go up one by one or all at once
+			shieldLEDstrip.fill(shieldLEDstrip.Color(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue), 0, shieldLEDnum);
+			shieldLEDstrip.show();
+			shldState = shieldsDrop; // todo this would need to be moved if one by one
+			break;
+		}
+		// todo when shields are all up, go to next case
+		//  todo shldState = shieldsDrop;
+		break;
+
+	case shieldsDrop:								   // mp3-2 playing and shields going down
+		if (digitalRead(buttonPin) == buttonActivated) // Look for button press  ----third time
+		{
+			buttonPressTime = millis();
+			myDFPlayer.playMp3Folder(mp3File3);
+			break;
+		}
+
+		Serial.print("ledNextTurnOffNum: ");
+		Serial.println(ledNextTurnOffNum);
+		/*
+		if (ledNextTurnOffNum == 0) {
+		  shieldLEDstrip.setPixelColor(ledNextTurnOffNum, 0);  // Turn off first LED
+		  shieldLEDstrip.show();
+		  ledNextTurnOffNum++;
+		  ledOffTime = millis();
+		  break;
+		}
+		*/
+
+		if (millis() - buttonPressTime > mp3File3Delay) // start shields down
+		{
+
+			ledOffTime = millis();
+		}
+
+		if (ledNextTurnOffNum == shieldLEDnum) // is this the last led to go out
+		{
+			ledNextTurnOffNum = 0;
+			//		ledOffTime = millis(); // todo may not need this
+			shldState = fullScene;
+		}
+		else
+		{
+			if (millis() - ledOffTime > ledOffDelay) // Is it time to turn next light off?
+			{
+				shieldLEDstrip.setPixelColor(ledNextTurnOffNum, 0); // Turn off next LED
+				shieldLEDstrip.show();
+				ledNextTurnOffNum++;
+				ledOffTime = millis();
+			}
+		}
+		break;
+
+	case fullScene: // do the entire scene
+
+		// todo grab all  the stuff and  put it here; will need additional timeing infor for mp3-4
+
+		/*  commented out the sections to start over as Neil does not have that
+			case fullScene: // shields have gone down, mp3-2 may be playing , then reset to start again
+
+				//      Serial.print("millis: ");
+				//      Serial.println(millis());
+				//      Serial.print("ledOffTime: ");
+				//      Serial.println(ledOffTime);
+
+				//      Serial.print("runOutMP3s2Time: ");
+				//      Serial.println(runOutMP3s2Time);
+
+				Serial.print("millis() - ledOffTime: ");
+				Serial.println(millis() - ledOffTime);
+
+				if (millis() - ledOffTime > runOutMP3s2Time) // has the runout time completed
+				{
+					shldState = waitToStartAgain;
+					mp3s2OutTime = millis();
+				}
+				break;
+			case waitToStartAgain:
+				if (millis() - mp3s2OutTime > resetDelay) // has the time start over completed
+				{
+					shldState = initialState;
+					resetLeds();
+					resetdfPlayer();
+					//     Serial.println("Reset for next go around ");
+				}
+
+				// Serial.print("millis() - mp3s2OutTime: ");
+				// Serial.println(millis() - mp3s2OutTime);
+
+				break;
+				// default:;
+
+				*/
+
+		break;
+	}
+} // ==============  END void(loop)
+
+// Function to set all LEDs off  *****change??????
+void clearLEDs()
+{
+	// Cycle through all LEDs
+	// todo need to generalize. &shield, LEDnum
+	for (int i = 0; i < shieldLEDnum; i++)
+	{
+		// Set color to zero which is off
+		shieldLEDstrip.setPixelColor(i, 0);
+	}
+}
+
+void resetLeds()
+{
+	clearLEDs(); // todo need to generalize. &shield, maxBright, redVal, grVal, blueVal, whiteVal, LEDnum
+	shieldLEDstrip.show();
+
+	shieldLEDstrip.fill(shieldLEDstrip.Color(shieldRedValue, shieldGreenValue, shieldBlueValue, 0), 0, shieldLEDnum);
+	shieldLEDstrip.show();
+}
