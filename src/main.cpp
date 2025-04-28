@@ -17,10 +17,19 @@ moved code to PlatfomrIO
 
 */
 
-#include "Reliant_Project.h"
+#include "Arduino.h"
+#include "SoftwareSerial.h"      //SOftware Serial Bus to support DFPlayer
+#include "DFRobotDFPlayerMini.h" //DFRobot DFPlayer Library
+#include <Adafruit_NeoPixel.h>   //Adafruit NeoPixel Library
+
+// #include "Reliant_Project.h"
 #include "global.h"
 
 // #include "ledStrip_functions.h"
+
+void initializeLEDstrips();
+void reliantLEDflash();
+
 
 SoftwareSerial mySoftwareSerial(rxPin, txPin);
 DFRobotDFPlayerMini myDFPlayer;
@@ -73,7 +82,7 @@ void loop()
 
 	//		delay(1500);
 
-	longButtonHold(); // test for long button press/hold/release
+	//longButtonHold(); // test for long button press/hold/release
 
 	switch (shldState)
 	{
@@ -476,6 +485,8 @@ void reliantLEDflash()
 	}
 }
 
+
+/*
 void longButtonHold()
 {
 	if (buttonStatus == LOW) // Button pressed  //was HIGH in example (prob due to PULL UP)
@@ -515,3 +526,4 @@ void longButtonHold()
 		}
 	}
 }
+*/

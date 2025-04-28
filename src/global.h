@@ -88,7 +88,7 @@ enum shieldStates
 	firePhasers,	  // 12 fire phasers (LED lightning)
 	buttonPressFile4, // 13 wait for button press to start File 4
 	fullScene,		  // 14 do full scene with no additional button pushes
-	waitToStartAgain  // 15 reset and start over  // ? what to do here
+//	waitToStartAgain  // 15 reset and start over  // ? what to do here
 };
 
 enum shieldStates shldState = initial; // = initial;
