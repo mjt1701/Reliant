@@ -10,6 +10,11 @@
 
   My Matt Troha
 
+// NeoPixel LED type definitions
+const neoPixelType SHIELD_LED_TYPE = NEO_GRBW + NEO_KHZ800;
+const neoPixelType SHIP_LED_TYPE   = NEO_GRBW + NEO_KHZ800; // change later if needed
+
+
 */
 
 const uint8_t rxPin = 10;		  // Define Arduino connection pin fo software serial rx
@@ -26,6 +31,7 @@ const uint8_t shieldRedValue = 0;	 // Define the shield LED color RGBW
 const uint8_t shieldGreenValue = 0;	 // Define the shield LED color RGBW
 const uint8_t shieldBlueValue = 255; // Define the shield LED color RGBW
 const uint8_t shieldWhiteValue = 0;	 // Define the shield LED color RGBW
+const neoPixelType SHIELD_LED_TYPE = NEO_GRBW + NEO_KHZ800;  // NeoPixel LED type definitions
 
 // Ship LEDs
 const uint8_t shipDataPin = 4;		// Define Arduino connection pin for Ship LED data
@@ -35,6 +41,8 @@ const uint8_t shipRedValue = 0;		// Define the Ship LED color RGBW
 const uint8_t shipGreenValue = 0;	// Define the Ship LED color RGBW
 const uint8_t shipBlueValue = 0;	// Define the Ship LED color RGBW
 const uint8_t shipWhiteValue = 255; // Define the Ship LED color RGBW
+const neoPixelType SHIP_LED_TYPE   = NEO_GRBW + NEO_KHZ800; // NeoPixel LED type definitions // change later if needed
+
 
 // mp3 file ID on card
 const int mp3File1 = 1; // mp3 file number of intro

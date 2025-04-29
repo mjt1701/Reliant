@@ -15,6 +15,8 @@ moved code to  initializeLEDstrips()
 
 moved code to PlatfomrIO
 
+refactor to add OOP for led strips
+
 */
 
 #include "Arduino.h"
@@ -22,8 +24,8 @@ moved code to PlatfomrIO
 #include "DFRobotDFPlayerMini.h" //DFRobot DFPlayer Library
 #include <Adafruit_NeoPixel.h>   //Adafruit NeoPixel Library
 
-// #include "Reliant_Project.h"
 #include "global.h"
+#include "LEDStrip.h"
 
 // #include "ledStrip_functions.h"
 
@@ -34,8 +36,12 @@ void reliantLEDflash();
 SoftwareSerial mySoftwareSerial(rxPin, txPin);
 DFRobotDFPlayerMini myDFPlayer;
 
-Adafruit_NeoPixel shieldLEDstrip = Adafruit_NeoPixel(shieldLEDnum, shieldDataPin, NEO_GRBW + NEO_KHZ800); // shields LED object
-Adafruit_NeoPixel shipLEDstrip = Adafruit_NeoPixel(shipLEDnum, shipDataPin, NEO_GRBW + NEO_KHZ800);		  // Ship LED object
+//Adafruit_NeoPixel shieldLEDstrip = Adafruit_NeoPixel(shieldLEDnum, shieldDataPin, NEO_GRBW + NEO_KHZ800); // shields LED object
+//Adafruit_NeoPixel shipLEDstrip = Adafruit_NeoPixel(shipLEDnum, shipDataPin, NEO_GRBW + NEO_KHZ800);		  // Ship LED object
+
+LEDStrip shieldLED(shieldDataPin, shieldLEDnum, SHIELD_LED_TYPE) ;
+LEDStrip shipLED(shipDataPin, shipLEDnum, SHIP_LED_TYPE ); // or NEO_RGBW + NEO_KHZ800 later if needed
+
 
 void setup()
 {
@@ -64,7 +70,18 @@ void setup()
 	myDFPlayer.volume(volume); // Set volume
 
 	// Initialize the LEDs,  turn each strip on and off
-	initializeLEDstrips();
+//	initializeLEDstrips();
+shieldLED.begin(shieldMaxBright);
+shipLED.begin(shipMaxBright);
+
+    // Startup indicator: turn both strips on for 2 seconds
+    shieldLED.fillColor(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue);
+    shipLED.fillColor(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue);
+    delay(2000);
+
+shieldLED.clear();
+shipLED.clear();
+
 }
 
 // ********************************************* LOOP starts
@@ -105,8 +122,10 @@ void loop()
 		//  turn ship leds on, play file 1
 		delay(1000);
 
-		shipLEDstrip.fill(shipLEDstrip.Color(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue), 0, shipLEDnum);
-		shipLEDstrip.show();
+	//	shipLEDstrip.fill(shipLEDstrip.Color(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue), 0, shipLEDnum);
+	//	shipLEDstrip.show();
+		shipLED.fillColor(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue);
+
 		//	Serial.println("    lights on ");
 		// delay(1000);
 		//	Serial.println("    pause 1 sec ");
@@ -177,8 +196,10 @@ void loop()
 		{
 			if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
 			{
-				shieldLEDstrip.setPixelColor(ledNextTurnOffNum, shieldLEDstrip.Color(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue)); // Turn off next LED
-				shieldLEDstrip.show();
+//				shieldLEDstrip.setPixelColor(ledNextTurnOffNum, shieldLEDstrip.Color(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue)); // Turn off next LED
+//				shieldLEDstrip.show();
+shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue);
+
 				ledNextTurnOffNum++;
 				ledOffTime = millis();
 			}
@@ -241,8 +262,10 @@ void loop()
 		{
 			if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
 			{
-				shieldLEDstrip.setPixelColor(ledNextTurnOffNum, 0); // Turn off next LED
-				shieldLEDstrip.show();
+	//			shieldLEDstrip.setPixelColor(ledNextTurnOffNum, 0); // Turn off next LED
+	//			shieldLEDstrip.show();
+
+	shieldLED.setPixelColor(ledNextTurnOffNum, 0,0,0,0);
 				ledNextTurnOffNum++;
 				ledOffTime = millis();
 			}
@@ -262,10 +285,16 @@ void loop()
 	case firePhasers: // Reliant ship lights flicker from being phasered
 	{
 		// fire once at 27 sec
-		reliantLEDflash();
-		reliantLEDflash();
-		reliantLEDflash();
-		reliantLEDflash();
+		shipLED.flash();
+		shipLED.flash();
+		shipLED.flash();
+		shipLED.flash();
+
+
+//		reliantLEDflash();
+//		reliantLEDflash();
+//		reliantLEDflash();
+//		reliantLEDflash();
 		// reliantLEDflash();
 		shldState = buttonPressFile4;
 	}
@@ -282,6 +311,8 @@ void loop()
 
 	case fullScene: // do the entire scene
 	{
+/*
+
 		// todo grab all  the stuff and  put it here; will need additional timeing infor for mp3-4
 
 		if (!buttonStatus == buttonActivated) // Look for button press  ----first time
@@ -391,7 +422,7 @@ void loop()
 	}
 	}
 } // ==============  END void(loop)
-
+/*
 void initializeLEDstrips()
 {
 
@@ -414,7 +445,9 @@ void initializeLEDstrips()
 	shipLEDstrip.fill(shipLEDstrip.Color(0, 0, 0, 0), 0, shipLEDnum);
 	shipLEDstrip.show();
 }
+*/
 
+/*
 void reliantLEDflash()
 {
 	// lightning variables
@@ -439,7 +472,7 @@ void reliantLEDflash()
 	// time to next flash range - ms
 	int nextFlashDelayMin = 1;
 	int nextFlashDelayMax = 50;
-	/*
+	
 		// debug serial print
 		Serial.println("FLASH");
 		Serial.print("Brightness: ");
@@ -447,7 +480,7 @@ void reliantLEDflash()
 		Serial.print("flashCount: ");
 		Serial.println(flashCount);
 		Serial.print("-");
-	*/
+	
 
 	for (int flash = 0; flash <= flashCount; flash += 1)
 	{
@@ -484,6 +517,7 @@ void reliantLEDflash()
 		delay(random(nextFlashDelayMin, nextFlashDelayMax));
 	}
 }
+*/
 
 
 /*
