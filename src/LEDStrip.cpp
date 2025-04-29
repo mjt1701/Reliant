@@ -29,7 +29,7 @@ void LEDStrip::flash(uint8_t minFlashes, uint8_t maxFlashes) {
     int r = random(40, 80);
     int g = random(10, 25);
     int b = random(0, 10);
-    int w = 50;
+    int w = 50;                 // todo unused variable 
 
     for (int i = 0; i < flashCount; ++i) {
         uint32_t color = strip.Color(

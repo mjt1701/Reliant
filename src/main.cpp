@@ -19,6 +19,8 @@ refactor to add OOP for led strips
 
 */
 
+
+
 #include "Arduino.h"
 #include "SoftwareSerial.h"      //SOftware Serial Bus to support DFPlayer
 #include "DFRobotDFPlayerMini.h" //DFRobot DFPlayer Library
@@ -26,15 +28,16 @@ refactor to add OOP for led strips
 
 #include "global.h"
 #include "LEDStrip.h"
+#include "SoundPlayer.h"
 
 // #include "ledStrip_functions.h"
 
-void initializeLEDstrips();
-void reliantLEDflash();
+//void initializeLEDstrips();
+//void reliantLEDflash();
 
-
-SoftwareSerial mySoftwareSerial(rxPin, txPin);
-DFRobotDFPlayerMini myDFPlayer;
+SoundPlayer sound(rxPin, txPin);
+//SoftwareSerial mySoftwareSerial(rxPin, txPin);
+//DFRobotDFPlayerMini myDFPlayer;
 
 //Adafruit_NeoPixel shieldLEDstrip = Adafruit_NeoPixel(shieldLEDnum, shieldDataPin, NEO_GRBW + NEO_KHZ800); // shields LED object
 //Adafruit_NeoPixel shipLEDstrip = Adafruit_NeoPixel(shipLEDnum, shipDataPin, NEO_GRBW + NEO_KHZ800);		  // Ship LED object
@@ -48,28 +51,29 @@ void setup()
 	pinMode(buttonPin, INPUT);	   // Push button pin
 	digitalWrite(buttonPin, HIGH); // turn on internal PullUP resistor
 
-	mySoftwareSerial.begin(9600);
-	delay(100); // dfPlayer needs a little time to initialize
+	//mySoftwareSerial.begin(9600);
+	sound.begin(volume);
+	//delay(100); // dfPlayer needs a little time to initialize
 
 	// todo remove or comment out Serial Monitor outputs
 	Serial.begin(115200); // Setup Serial Monitor
 
 	Serial.println("Starting Program");
-	Serial.print(" !myDFPlayer.begin(mySoftwareSerial): ");
-	Serial.println(!myDFPlayer.begin(mySoftwareSerial));
+	// Serial.print(" !myDFPlayer.begin(mySoftwareSerial): ");
+	// Serial.println(!myDFPlayer.begin(mySoftwareSerial));
 
-	if (!myDFPlayer.begin(mySoftwareSerial))
-	{ // Use softwareSerial to communicate with dfPlayer
-		Serial.println(F("Unable to begin:"));
-		Serial.println(F("1.Please recheck the connection!"));
-		Serial.println(F("2.Please insert the SD card!"));
-		while (true)
-			;
-	}
+	// if (!myDFPlayer.begin(mySoftwareSerial))
+	// { // Use softwareSerial to communicate with dfPlayer
+	// 	Serial.println(F("Unable to begin:"));
+	// 	Serial.println(F("1.Please recheck the connection!"));
+	// 	Serial.println(F("2.Please insert the SD card!"));
+	// 	while (true)
+	// 		;
+	// }
 
-	myDFPlayer.volume(volume); // Set volume
+	// myDFPlayer.volume(volume); // Set volume
 
-	// Initialize the LEDs,  turn each strip on and off
+
 //	initializeLEDstrips();
 shieldLED.begin(shieldMaxBright);
 shipLED.begin(shipMaxBright);
@@ -130,7 +134,8 @@ void loop()
 		// delay(1000);
 		//	Serial.println("    pause 1 sec ");
 
-		myDFPlayer.playMp3Folder(mp3File1);
+		//myDFPlayer.playMp3Folder(mp3File1);
+		sound.play(mp3File1);
 		shldState = buttonPressFile2;
 		//	Serial.println("    mp3File1  on ");
 		//		delay(4000);
@@ -151,7 +156,8 @@ void loop()
 		if (buttonStatus == buttonActivated) // Look for button press  ----second time
 		{
 			buttonPressTime = millis();
-			myDFPlayer.playMp3Folder(mp3File2);
+			//myDFPlayer.playMp3Folder(mp3File2);
+			sound.play(mp3File2);
 			shldState = cueShieldsUp;
 		}
 	}
@@ -159,7 +165,7 @@ void loop()
 
 	case cueShieldsUp: // wait for time to start shields up
 	{
-		// todo does button press need to wait for mp3-1 to complete?
+		// TODO  does button press need to wait for mp3-1 to complete?
 		/*		Serial.println(" millis() | buttonpresstime | millis() - buttonPressTime: ");
 				Serial.print(millis());
 				Serial.print("  ");
@@ -219,7 +225,8 @@ shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shi
 	case playFile3: //   add comment
 	{
 		buttonPressTime = millis();
-		myDFPlayer.playMp3Folder(mp3File3);
+		//myDFPlayer.playMp3Folder(mp3File3);
+		sound.play(mp3File3);
 		shldState = cueShieldsDown;
 
 		//	Serial.print(" buttonPressTime: ");
