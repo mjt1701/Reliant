@@ -51,6 +51,10 @@ void LEDStrip::flash(uint8_t minFlashes, uint8_t maxFlashes) {
         strip.show();
         delay(random(5, 75));
 
+        strip.fill(color, 2, 2);
+        strip.show();
+        delay(random(5, 75));
+
         strip.clear();
         strip.show();
         delay(random(1, 50));
