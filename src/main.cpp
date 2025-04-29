@@ -15,77 +15,47 @@ moved code to  initializeLEDstrips()
 
 moved code to PlatfomrIO
 
-refactor to add OOP for led strips
+refactor to add OOP for led strips and sound
 
 */
 
-
-
 #include "Arduino.h"
-#include "SoftwareSerial.h"      //SOftware Serial Bus to support DFPlayer
+#include "SoftwareSerial.h"		 //SOftware Serial Bus to support DFPlayer
 #include "DFRobotDFPlayerMini.h" //DFRobot DFPlayer Library
-#include <Adafruit_NeoPixel.h>   //Adafruit NeoPixel Library
+#include <Adafruit_NeoPixel.h>	 //Adafruit NeoPixel Library
 
 #include "global.h"
 #include "LEDStrip.h"
 #include "SoundPlayer.h"
 
-// #include "ledStrip_functions.h"
-
-//void initializeLEDstrips();
-//void reliantLEDflash();
-
 SoundPlayer sound(rxPin, txPin);
-//SoftwareSerial mySoftwareSerial(rxPin, txPin);
-//DFRobotDFPlayerMini myDFPlayer;
 
-//Adafruit_NeoPixel shieldLEDstrip = Adafruit_NeoPixel(shieldLEDnum, shieldDataPin, NEO_GRBW + NEO_KHZ800); // shields LED object
-//Adafruit_NeoPixel shipLEDstrip = Adafruit_NeoPixel(shipLEDnum, shipDataPin, NEO_GRBW + NEO_KHZ800);		  // Ship LED object
-
-LEDStrip shieldLED(shieldDataPin, shieldLEDnum, SHIELD_LED_TYPE) ;
-LEDStrip shipLED(shipDataPin, shipLEDnum, SHIP_LED_TYPE ); // or NEO_RGBW + NEO_KHZ800 later if needed
-
+LEDStrip shieldLED(shieldDataPin, shieldLEDnum, SHIELD_LED_TYPE);
+LEDStrip shipLED(shipDataPin, shipLEDnum, SHIP_LED_TYPE); // or NEO_RGBW + NEO_KHZ800 later if needed
 
 void setup()
 {
 	pinMode(buttonPin, INPUT);	   // Push button pin
 	digitalWrite(buttonPin, HIGH); // turn on internal PullUP resistor
 
-	//mySoftwareSerial.begin(9600);
 	sound.begin(volume);
-	//delay(100); // dfPlayer needs a little time to initialize
 
 	// todo remove or comment out Serial Monitor outputs
 	Serial.begin(115200); // Setup Serial Monitor
 
 	Serial.println("Starting Program");
-	// Serial.print(" !myDFPlayer.begin(mySoftwareSerial): ");
-	// Serial.println(!myDFPlayer.begin(mySoftwareSerial));
 
-	// if (!myDFPlayer.begin(mySoftwareSerial))
-	// { // Use softwareSerial to communicate with dfPlayer
-	// 	Serial.println(F("Unable to begin:"));
-	// 	Serial.println(F("1.Please recheck the connection!"));
-	// 	Serial.println(F("2.Please insert the SD card!"));
-	// 	while (true)
-	// 		;
-	// }
+	//	initializeLEDstrips();
+	shieldLED.begin(shieldMaxBright);
+	shipLED.begin(shipMaxBright);
 
-	// myDFPlayer.volume(volume); // Set volume
+	// Startup indicator: turn both strips on for 2 seconds
+	shieldLED.fillColor(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue);
+	shipLED.fillColor(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue);
+	delay(2000);
 
-
-//	initializeLEDstrips();
-shieldLED.begin(shieldMaxBright);
-shipLED.begin(shipMaxBright);
-
-    // Startup indicator: turn both strips on for 2 seconds
-    shieldLED.fillColor(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue);
-    shipLED.fillColor(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue);
-    delay(2000);
-
-shieldLED.clear();
-shipLED.clear();
-
+	shieldLED.clear();
+	shipLED.clear();
 }
 
 // ********************************************* LOOP starts
@@ -96,23 +66,14 @@ void loop()
 
 	buttonStatus = digitalRead(buttonPin);
 
-	//		Serial.print("    buttonStatus: ");
-	//		Serial.print(buttonStatus);
-	//		Serial.print("    buttonActivated: ");
-	//		Serial.println(buttonActivated);
-
-	//		delay(1500);
-
-	//longButtonHold(); // test for long button press/hold/release
-
 	switch (shldState)
 	{
 
-	case initial: // 0 anything that needs done at turn on
+	case initial: //  anything that needs done at turn on //todo remove initial state
 		shldState = buttonPressFile1;
 		break;
 
-	case buttonPressFile1: // 1 wait for buttonpress to start
+	case buttonPressFile1: //  wait for buttonpress to start
 	{
 		if (buttonStatus == buttonActivated) // Look for button press  ----first time
 		{
@@ -121,24 +82,11 @@ void loop()
 	}
 	break;
 
-	case playFile1: // 2 turn on file 1, turn on ship lights
+	case playFile1: //  turn on file 1, turn on ship lights
 	{
-		//  turn ship leds on, play file 1
-		delay(1000);
-
-	//	shipLEDstrip.fill(shipLEDstrip.Color(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue), 0, shipLEDnum);
-	//	shipLEDstrip.show();
 		shipLED.fillColor(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue);
-
-		//	Serial.println("    lights on ");
-		// delay(1000);
-		//	Serial.println("    pause 1 sec ");
-
-		//myDFPlayer.playMp3Folder(mp3File1);
 		sound.play(mp3File1);
 		shldState = buttonPressFile2;
-		//	Serial.println("    mp3File1  on ");
-		//		delay(4000);
 	}
 	break;
 
@@ -156,7 +104,6 @@ void loop()
 		if (buttonStatus == buttonActivated) // Look for button press  ----second time
 		{
 			buttonPressTime = millis();
-			//myDFPlayer.playMp3Folder(mp3File2);
 			sound.play(mp3File2);
 			shldState = cueShieldsUp;
 		}
@@ -166,16 +113,9 @@ void loop()
 	case cueShieldsUp: // wait for time to start shields up
 	{
 		// TODO  does button press need to wait for mp3-1 to complete?
-		/*		Serial.println(" millis() | buttonpresstime | millis() - buttonPressTime: ");
-				Serial.print(millis());
-				Serial.print("  ");
-				Serial.print(buttonPressTime);
-				Serial.print("  ");
-				Serial.println(millis() - buttonPressTime);
-		*/
+
 		if (millis() - buttonPressTime > mp3File2Delay)
 		{
-
 			shldState = shieldsUp;
 		}
 	}
@@ -183,28 +123,17 @@ void loop()
 
 	case shieldsUp: // turn shield leds on
 	{
-		/*
-		Serial.print(" buttonPressTime: ");
-		Serial.println(buttonPressTime);
-		Serial.print(" millis(): ");
-		Serial.println(millis());
-		Serial.print(" millis() - buttonPressTime: ");
-		Serial.println(millis() - buttonPressTime);
-*/
-
 		if (ledNextTurnOffNum == shieldLEDnum) // is this the last led to go on
 		{
 			ledNextTurnOffNum = 0; // Reset for next time
-			//		ledOffTime = millis(); // ? may not need this
 			shldState = buttonPressFile3;
 		}
 		else
 		{
 			if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
 			{
-//				shieldLEDstrip.setPixelColor(ledNextTurnOffNum, shieldLEDstrip.Color(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue)); // Turn off next LED
-//				shieldLEDstrip.show();
-shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue);
+
+				shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue);
 
 				ledNextTurnOffNum++;
 				ledOffTime = millis();
@@ -225,18 +154,13 @@ shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shi
 	case playFile3: //   add comment
 	{
 		buttonPressTime = millis();
-		//myDFPlayer.playMp3Folder(mp3File3);
 		sound.play(mp3File3);
 		shldState = cueShieldsDown;
-
-		//	Serial.print(" buttonPressTime: ");
-		//	Serial.println(buttonPressTime);
 	}
 	break;
 
 	case cueShieldsDown: //  * add comment
 	{
-
 		if (millis() - buttonPressTime > mp3File3_1Delay) // is it time tostart shields down
 		{
 			ledOffTime = millis();
@@ -247,32 +171,16 @@ shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shi
 
 	case shieldsDown: // shields going down
 	{
-		/*
-		Serial.print("ledNextTurnOffNum: ");
-		Serial.println(ledNextTurnOffNum);
-
-		Serial.print(" buttonPressTime: ");
-		Serial.println(buttonPressTime);
-		Serial.print(" millis(): ");
-		Serial.println(millis());
-		Serial.print(" millis() - buttonPressTime: ");
-		Serial.println(millis() - buttonPressTime);
-		*/
-
 		if (ledNextTurnOffNum == shieldLEDnum) // is this the last led to go out
 		{
 			ledNextTurnOffNum = 0; // Reset for next time
-			//		ledOffTime = millis(); // ? may not need this
 			shldState = cuePhaserFire;
 		}
 		else
 		{
 			if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
 			{
-	//			shieldLEDstrip.setPixelColor(ledNextTurnOffNum, 0); // Turn off next LED
-	//			shieldLEDstrip.show();
-
-	shieldLED.setPixelColor(ledNextTurnOffNum, 0,0,0,0);
+				shieldLED.setPixelColor(ledNextTurnOffNum, 0, 0, 0, 0);
 				ledNextTurnOffNum++;
 				ledOffTime = millis();
 			}
@@ -297,12 +205,6 @@ shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shi
 		shipLED.flash();
 		shipLED.flash();
 
-
-//		reliantLEDflash();
-//		reliantLEDflash();
-//		reliantLEDflash();
-//		reliantLEDflash();
-		// reliantLEDflash();
 		shldState = buttonPressFile4;
 	}
 	break;
@@ -316,143 +218,13 @@ shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shi
 	}
 	break;
 
-	case fullScene: // do the entire scene
+	case fullScene: // do the entire scene without pause for 
 	{
-/*
-
-		// todo grab all  the stuff and  put it here; will need additional timeing infor for mp3-4
-
-		if (!buttonStatus == buttonActivated) // Look for button press  ----first time
-		{
-			// shldState = playFile1;
-			break;
-		}
-
-		if (millis() - buttonPressTime > mp3File4_1Delay) // is it time tostart shields down
-		{
-			ledOffTime = millis();
-			shldState = shieldsDown;
-		}
-
-		break;
-
-		//
-
-		if (ledNextTurnOffNum == shieldLEDnum) // is this the last led to go on
-		{
-			ledNextTurnOffNum = 0; // Reset for next time
-			//		ledOffTime = millis(); // ? may not need this
-			shldState = buttonPressFile3;
-		}
-		else
-		{
-			if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
-			{
-				shieldLEDstrip.setPixelColor(ledNextTurnOffNum, shieldLEDstrip.Color(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue)); // Turn off next LED
-				shieldLEDstrip.show();
-				ledNextTurnOffNum++;
-				ledOffTime = millis();
-			}
-		}
-		break;
-
-		//
-		if (millis() - buttonPressTime > mp3File3_1Delay) // is it time tostart shields down
-		{
-			ledOffTime = millis();
-			shldState = shieldsDown;
-		}
-		break;
-
-		//
-
-		if (ledNextTurnOffNum == shieldLEDnum) // is this the last led to go out
-		{
-			ledNextTurnOffNum = 0; // Reset for next time
-			//		ledOffTime = millis(); // ? may not need this
-			shldState = buttonPressFile4;
-		}
-		else
-		{
-			if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
-			{
-				shieldLEDstrip.setPixelColor(ledNextTurnOffNum, 0); // Turn off next LED
-				shieldLEDstrip.show();
-				ledNextTurnOffNum++;
-				ledOffTime = millis();
-			}
-		}
-		break;
-
-		//
-
-		// todo
-
-		/*  commented out the sections to start over as Neil does not have that
-			case fullScene: // shields have gone down, mp3-2 may be playing , then reset to start again
-
-				//      Serial.print("millis: ");
-				//      Serial.println(millis());
-				//      Serial.print("ledOffTime: ");
-				//      Serial.println(ledOffTime);
-
-				//      Serial.print("runOutMP3s2Time: ");
-				//      Serial.println(runOutMP3s2Time);
-
-				Serial.print("millis() - ledOffTime: ");
-				Serial.println(millis() - ledOffTime);
-
-				if (millis() - ledOffTime > runOutMP3s2Time) // has the runout time completed
-				{
-					shldState = waitToStartAgain;
-					mp3s2OutTime = millis();
-				}
-				break;
-			case waitToStartAgain:
-				if (millis() - mp3s2OutTime > resetDelay) // has the time start over completed
-				{
-					shldState = initial;
-					resetLeds();
-					resetdfPlayer();
-					//     Serial.println("Reset for next go around ");
-				}
-
-				// Serial.print("millis() - mp3s2OutTime: ");
-				// Serial.println(millis() - mp3s2OutTime);
-
-				break;
-				// default:;
-
-				*/
-
 		break;
 	}
 	}
 } // ==============  END void(loop)
-/*
-void initializeLEDstrips()
-{
 
-	shieldLEDstrip.begin();
-	shipLEDstrip.begin();
-
-	shieldLEDstrip.setBrightness(shieldMaxBright);
-	shieldLEDstrip.fill(shieldLEDstrip.Color(shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue), 0, shieldLEDnum);
-	shieldLEDstrip.show();
-	delay(1000);
-
-	shieldLEDstrip.fill(shieldLEDstrip.Color(0, 0, 0, 0), 0, shieldLEDnum);
-	shieldLEDstrip.show();
-
-	shipLEDstrip.setBrightness(shipMaxBright);
-	shipLEDstrip.fill(shipLEDstrip.Color(shipRedValue, shipGreenValue, shipBlueValue, shipWhiteValue), 0, shipLEDnum);
-	shipLEDstrip.show();
-	delay(1000);
-
-	shipLEDstrip.fill(shipLEDstrip.Color(0, 0, 0, 0), 0, shipLEDnum);
-	shipLEDstrip.show();
-}
-*/
 
 /*
 void reliantLEDflash()
@@ -479,15 +251,6 @@ void reliantLEDflash()
 	// time to next flash range - ms
 	int nextFlashDelayMin = 1;
 	int nextFlashDelayMax = 50;
-	
-		// debug serial print
-		Serial.println("FLASH");
-		Serial.print("Brightness: ");
-		Serial.println(flashBrightness);
-		Serial.print("flashCount: ");
-		Serial.println(flashCount);
-		Serial.print("-");
-	
 
 	for (int flash = 0; flash <= flashCount; flash += 1)
 	{
@@ -525,7 +288,6 @@ void reliantLEDflash()
 	}
 }
 */
-
 
 /*
 void longButtonHold()
