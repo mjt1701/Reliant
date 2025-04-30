@@ -17,6 +17,8 @@ const neoPixelType SHIP_LED_TYPE   = NEO_GRBW + NEO_KHZ800; // change later if n
 
 */
 
+// todo chatgpt says that i can reoove all buton variables
+
 const uint8_t rxPin = 10;		  // Define Arduino connection pin fo software serial rx
 const uint8_t txPin = 11;		  // Define Arduino connection pin fo software serial tx
 const uint8_t buttonPin = 6;	  // Define Arduino connection pin for button
@@ -96,6 +98,7 @@ enum shieldStates
 	firePhasers,	  // 12 fire phasers (LED lightning)
 	buttonPressFile4, // 13 wait for button press to start File 4
 	fullScene,		  // 14 do full scene with no additional button pushes
+	SET_VOLUME        // 15 special case to set volume
 //	waitToStartAgain  // 15 reset and start over  // ? what to do here
 };
 

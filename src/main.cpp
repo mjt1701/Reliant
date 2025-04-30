@@ -27,11 +27,12 @@ refactor to add OOP for led strips and sound
 #include "global.h"
 #include "LEDStrip.h"
 #include "SoundPlayer.h"
-
-SoundPlayer sound(rxPin, txPin);
+#include "ButtonHandler.h"
 
 LEDStrip shieldLED(shieldDataPin, shieldLEDnum, SHIELD_LED_TYPE);
 LEDStrip shipLED(shipDataPin, shipLEDnum, SHIP_LED_TYPE); // or NEO_RGBW + NEO_KHZ800 later if needed
+ButtonHandler button(buttonPin, buttonActivated);
+SoundPlayer sound(rxPin, txPin);
 
 void setup()
 {
@@ -41,7 +42,7 @@ void setup()
 	sound.begin(volume);
 
 	// todo remove or comment out Serial Monitor outputs
-	Serial.begin(115200); // Setup Serial Monitor
+	Serial.begin(9600); // Setup Serial Monitor
 
 	Serial.println("Starting Program");
 
@@ -61,11 +62,15 @@ void setup()
 // ********************************************* LOOP starts
 void loop()
 {
-	Serial.print(" Shield State: ");
-	Serial.println(shldState);
 
-	buttonStatus = digitalRead(buttonPin);
+//	buttonStatus = digitalRead(buttonPin);
+button.update();
 
+if (button.isLongPress()) { 
+shldState=SET_VOLUME;
+Serial.println("LONG PRESS ACTION");
+}
+Serial.println(shldState);
 	switch (shldState)
 	{
 
@@ -75,8 +80,9 @@ void loop()
 
 	case buttonPressFile1: //  wait for buttonpress to start
 	{
-		if (buttonStatus == buttonActivated) // Look for button press  ----first time
-		{
+	//	if (buttonStatus == buttonActivated) // Look for button press  ----first time
+	if(button.isShortPress())
+	{
 			shldState = playFile1;
 		}
 	}
@@ -90,18 +96,20 @@ void loop()
 	}
 	break;
 
-	case buttonPressFile2: // 3 wait for buttonpress  // * more description
+	case buttonPressFile2: //  wait for buttonpress  // * more description
 	{
-		if (buttonStatus == buttonActivated) // Look for button press  ----first time
-		{
+	//	if (buttonStatus == buttonActivated) // Look for button press  ----first time
+	if(button.isShortPress())
+	{
 			shldState = playFile2;
 		}
 	}
 	break;
 
-	case playFile2: // 4 button hit to launch scene; play file 2
+	case playFile2: //  button hit to launch scene; play file 2  //todo why the second time thing
 	{
-		if (buttonStatus == buttonActivated) // Look for button press  ----second time
+	//	if (buttonStatus == buttonActivated) // Look for button press  ----second time
+	//	if(button.isShortPress())
 		{
 			buttonPressTime = millis();
 			sound.play(mp3File2);
@@ -144,7 +152,9 @@ void loop()
 
 	case buttonPressFile3:
 	{
-		if (buttonStatus == buttonActivated) // Look for button press  ----third time
+	
+	//	if (buttonStatus == buttonActivated) // Look for button press  ----third time
+	if(button.isShortPress())
 		{
 			shldState = playFile3;
 		}
@@ -222,6 +232,24 @@ void loop()
 	{
 		break;
 	}
+
+	case SET_VOLUME: // set volume 
+	{
+		sound.stop();
+		shieldLED.clear();
+		shipLED.clear();
+		shipLED.flash();
+		shipLED.flash();
+		shipLED.flash();
+		shipLED.flash();
+		delay(5000);
+
+		shldState= initial;
+		button.reset(); // Prevents unwanted short press being used in next state
+
+		break;
+	}
+	
 	}
 } // ==============  END void(loop)
 
