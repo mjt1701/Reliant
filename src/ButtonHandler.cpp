@@ -8,10 +8,13 @@ ButtonHandler::ButtonHandler(uint8_t pin, bool activeState, unsigned long longPr
 void ButtonHandler::reset() {
     shortPressDetected = false;
     longPressDetected = false;
+    longPressJustStarted = false;
+    Serial.println("ButtonHandler::reset() called");
 }
 
 void ButtonHandler::update() {
     bool reading = digitalRead(pin);
+
 
     if (reading != lastReading) {
         lastDebounceTime = millis(); // reset debounce timer
@@ -25,10 +28,12 @@ void ButtonHandler::update() {
             isPressing = true;
             pressStartTime = millis();
             longPressDetected = false;
+            longPressJustStarted = false;
         } else if (pressed && isPressing) {
             // Button held
             if (!longPressDetected && (millis() - pressStartTime >= longPressDuration)) {
                 longPressDetected = true;
+                longPressJustStarted = true; // <-- Flag moment of long press
                 Serial.println("Long press triggered");
             }
         } else if (!pressed && isPressing) {
@@ -37,7 +42,6 @@ void ButtonHandler::update() {
                 shortPressDetected = true;
             }
             isPressing = false;
-  //          longPressDetected = false;
         }
     }
 
@@ -52,10 +56,34 @@ bool ButtonHandler::isShortPress() {
     return false;
 }
 
-bool ButtonHandler::isLongPress() {
-    if (longPressDetected && !isPressing) {
-        longPressDetected = false; // Reset only after release
+// bool ButtonHandler::isLongPress() {
+//     if (longPressDetected && !isPressing) {
+//         longPressDetected = false;
+//         return true;
+//     }
+//     return false;
+// }
+
+// bool ButtonHandler::isNewLongPress() {
+//     if (longPressJustStarted) {
+//         longPressJustStarted = false;
+//         return true;
+//     }
+//     return false;
+// }
+
+bool ButtonHandler::wasLongPressStart() {
+    if (longPressDetected) {
+        longPressDetected = false;
         return true;
     }
     return false;
+}
+
+bool ButtonHandler::isHeldLong() {
+    return isPressing && (millis() - pressStartTime >= longPressDuration);
+}
+
+bool ButtonHandler::isPhysicallyReleased() const {
+    return lastReading != activeState;
 }

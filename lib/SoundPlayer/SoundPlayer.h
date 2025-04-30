@@ -9,13 +9,20 @@ class SoundPlayer {
 public:
     SoundPlayer(uint8_t rxPin, uint8_t txPin);
 
-    void begin(uint8_t volume);
+    void begin();
     void play(uint8_t fileNumber);
     void stop();                       //!  todo for use with long buttonpress 
+    void volumeUp();
+    void volumeDown();
+    void setVolume(uint8_t vol);
+    void saveVolume();
+    void loadVolume();
 
 private:
     SoftwareSerial serial;
     DFRobotDFPlayerMini player;
+    uint8_t currentVolume = 15; // Default volume
+
 };
 
 #endif

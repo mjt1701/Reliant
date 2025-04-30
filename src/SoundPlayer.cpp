@@ -3,7 +3,7 @@
 SoundPlayer::SoundPlayer(uint8_t rxPin, uint8_t txPin)
     : serial(rxPin, txPin) {}
 
-void SoundPlayer::begin(uint8_t volume) {
+void SoundPlayer::begin() {
     serial.begin(9600);
     delay(100); // Allow DFPlayer to boot
 
@@ -14,7 +14,7 @@ void SoundPlayer::begin(uint8_t volume) {
         while (true); // Halt system
     }
 
-    player.volume(volume);
+    player.volume(currentVolume);  //todo when usiing eeprom: loadVolume(); // Load from EEPROM  
 }
 
 void SoundPlayer::play(uint8_t fileNumber) {
@@ -23,4 +23,23 @@ void SoundPlayer::play(uint8_t fileNumber) {
 
 void SoundPlayer::stop() {
     player.stop();
+}
+
+void SoundPlayer::volumeUp() {
+    if (currentVolume < 30) {
+        currentVolume++;
+        player.volume(currentVolume);
+    }
+}
+
+void SoundPlayer::volumeDown() {
+    if (currentVolume > 0) {
+        currentVolume--;
+        player.volume(currentVolume);
+    }
+}
+
+void SoundPlayer::setVolume(uint8_t vol) {
+    currentVolume = constrain(vol, 0, 30);
+    player.volume(currentVolume);
 }
