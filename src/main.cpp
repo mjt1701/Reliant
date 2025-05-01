@@ -59,16 +59,9 @@ void setup()
 // ********************************************* LOOP starts
 void loop()
 {
-
 	//	buttonStatus = digitalRead(buttonPin);
 	button.update();
 
-	// if (button.wasLongPressStart() && shldState != SET_VOLUME) { 
-	// 	button.reset();  // ✅ Clear any stale button states right before entering SET_VOLUME
-	// 	shldState = SET_VOLUME;
-	// 	Serial.println("LONG PRESS ACTION");
-	// }
-	// Serial.println(shldState);
 	switch (shldState)
 	{
 
@@ -91,9 +84,10 @@ void loop()
 		{
 			shldState = SET_VOLUME;
 			Serial.println(shldState);
+			button.reset();
 		}
-
 	}
+//	button.reset();
 	break;
 
 	case playFile1: //  turn on file 1, turn on ship lights
@@ -116,9 +110,8 @@ void loop()
 	}
 	break;
 
-	case playFile2: //  button hit to launch scene; play file 2  //todo why the second time thing
+	case playFile2: //  button hit to launch scene; play file 2 
 	{
-
 		{
 			buttonPressTime = millis();
 			sound.play(mp3File2);
@@ -154,8 +147,7 @@ void loop()
 				ledNextTurnOffNum++;
 				ledOffTime = millis();
 			}
-		
-	}
+			}
 	break;
 
 	case buttonPressFile3:
@@ -204,7 +196,6 @@ void loop()
 				ledNextTurnOffNum++;
 				ledOffTime = millis();
 			}
-		
 	}
 	break;
 
@@ -226,85 +217,65 @@ void loop()
 		shipLED.flash();
 		shipLED.flash();
 
-		shldState = buttonPressFile4;
+		shldState = initial;
 		Serial.println(shldState);
 	}
 	break;
 
-	case buttonPressFile4: // wait for buttonpress  // * more description
-	// {
-	// 	if (buttonStatus == buttonActivated) // Look for button press  ----first time
-	// 	{
-	// 		//	shldState = fullScene;
-	// 	}
-	// }
-	break;
 
 	case fullScene: // do the entire scene without pause for
 	{
 		break;
 	}
 
+case SET_VOLUME: {
+	//	Serial.println("lets set the volume...");
 
-	case SET_VOLUME: {
-		Serial.println("lets set the volume...");
-		shldState = initial;
-		button.reset();
-		// static bool initialized = false;
-		// static unsigned long lastInteraction = 0;
-		// static unsigned long volumeCooldown = 300;
-		// static unsigned long lastVolumeChange = 0;
-		// static bool waitingForRelease = false; 
-	
-		// unsigned long now = millis();  // Only get millis() once per loop
-	
-		// if (!initialized) {
-		// 	Serial.println("Entered SET_VOLUME mode");
-		// 	initialized = true;
-		// 	waitingForRelease = true;
-		// 	lastInteraction = now;
-		// 	button.reset();  // Clear any leftover flags
-		// 	break;           // Exit this loop iteration cleanly
-		// }
 
-		// if (waitingForRelease) {
-		// 	if (button.isPhysicallyReleased()) {
-		// 		waitingForRelease = false;  // Button was released — resume input
-		// 	} else {
-		// 		break;  // Still holding — wait
-		// 	}
-		// }
-		
+		static bool initialized = false;
+		static unsigned long lastInteraction = 0;
+		static unsigned long lastVolumeChange = 0;
+		const unsigned long volumeCooldown = 750;
+		const unsigned long exitTimeout = 5000;
 	
-		// // Volume Down – hold
-		// if (button.isHeldLong() && (now - lastVolumeChange > volumeCooldown)) {
-		// 	sound.volumeDown();
-		// 	lastVolumeChange = now;
-		// 	lastInteraction = now;
-		// 	Serial.println("Volume DOWN");
-		// 	shipLED.flash();
-		// 	shipLED.flash();
-		// }
+		unsigned long now = millis();
 	
-		// // Volume Up – short press
-		// if (button.isShortPress() && (now - lastVolumeChange > volumeCooldown)) {
-		// 	sound.volumeUp();
-		// 	lastVolumeChange = now;
-		// 	lastInteraction = now;
-		// 	Serial.println("Volume UP");
-		// 	shipLED.flash();
-		// }
+		if (!initialized) {
+			Serial.println("Entered SET_VOLUME mode");
+			initialized = true;
+			lastInteraction = now;
+			lastVolumeChange = now;
+		}
 	
-		// // Exit volume mode after inactivity
-		// if (now - lastInteraction > 5000) {
-		// 	Serial.println("Exiting SET_VOLUME mode");
-		// 	shldState = initial;
-		// 	initialized = false;
-		// 	button.reset();
-		// }
+		// Volume Up – short press
+		if (button.wasShortPressed() && (now - lastVolumeChange > volumeCooldown)) {
+			sound.volumeUp();
+			lastVolumeChange = now;
+			lastInteraction = now;
+			Serial.println("Volume UP");
+		}
+	
+		// Volume Down – long press hold
+		if (button.wasLongPressStart() && (now - lastVolumeChange > volumeCooldown)) {
+			sound.volumeDown();
+			lastVolumeChange = now;
+			lastInteraction = now;
+			Serial.println("Volume DOWN");
+		}
+	
+		// Exit after inactivity
+		if (now - lastInteraction > exitTimeout) {
+			Serial.println("Exiting SET_VOLUME mode");
+	
+			// Do all cleanup here
+			shldState = initial;
+			initialized = false;
+			button.reset(); // This clears stale long/short flags
+		}
 	
 		break;
 	}
+	
 	
 	
 
@@ -312,66 +283,4 @@ void loop()
 		//	}
 	} // ==============  END void(loop)
 
-	/*
-	void reliantLEDflash()
-	{
-		// lightning variables
-		// use rgbw neopixel adjust the following values to tweak lightning base color
-		int r = random(40, 80);
-		int g = random(10, 25);
-		int b = random(0, 10);
-		// return 32 bit color
-		uint32_t color = shipLEDstrip.Color(r, g, b, 50);
-		// number of flashes
-		int flashCount = random(9, 15); // 5-15
-		// flash white brightness range - 0-255
-		int flashBrightnessMin = 10;
-		int flashBrightnessMax = 30; // can go to 255 //todo see what works for reliant
-		int flashBrightness = random(flashBrightnessMin, flashBrightnessMax);
-		// flash duration range - ms
-		int flashDurationMin = 5;
-		int flashDurationMax = 75;
-		// flash off range - ms
-		int flashOffsetMin = 0;
-		int flashOffsetMax = 75;
-		// time to next flash range - ms
-		int nextFlashDelayMin = 1;
-		int nextFlashDelayMax = 50;
-
-		for (int flash = 0; flash <= flashCount; flash += 1)
-		{
-			// add variety to color
-			int colorV = random(0, 50);
-
-			// flash segments of neopixel strip
-			color = shipLEDstrip.Color(r + colorV, g + colorV, b + colorV, flashBrightness);
-			shipLEDstrip.fill(color, 0, 2); // 0,4
-			shipLEDstrip.show();
-			// delay(2000);
-			delay(random(flashOffsetMin, flashOffsetMax));
-			colorV = random(0, 50);
-			color = shipLEDstrip.Color(r + colorV, g + colorV, b + colorV, flashBrightness);
-			shipLEDstrip.fill(color, 4, 2); // 8,4
-			shipLEDstrip.show();
-			//  delay(2000);
-			delay(random(flashOffsetMin, flashOffsetMax));
-			colorV = random(0, 50);
-			color = shipLEDstrip.Color(r + colorV, g + colorV, b + colorV, flashBrightness);
-			shipLEDstrip.fill(color, 6, 2); // 4,4
-			shipLEDstrip.show();
-			//  delay(2000);
-			delay(random(flashOffsetMin, flashOffsetMax));
-			colorV = random(0, 50);
-			color = shipLEDstrip.Color(r + colorV, g + colorV, b + colorV, flashBrightness);
-			shipLEDstrip.fill(color, 2, 2); // 9,14
-			shipLEDstrip.show();
-			//  delay(2000);
-			delay(random(flashDurationMin, flashDurationMax));
-			shipLEDstrip.clear();
-			shipLEDstrip.show();
-			// delay(2000);
-			delay(random(nextFlashDelayMin, nextFlashDelayMax));
-		}
-	}
-	*/
 

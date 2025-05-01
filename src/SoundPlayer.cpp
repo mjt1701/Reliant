@@ -28,6 +28,8 @@ void SoundPlayer::stop() {
 void SoundPlayer::volumeUp() {
     if (currentVolume < 30) {
         currentVolume++;
+        Serial.print("volume: ");
+        Serial.println(currentVolume);
         player.volume(currentVolume);
     }
 }
@@ -35,6 +37,8 @@ void SoundPlayer::volumeUp() {
 void SoundPlayer::volumeDown() {
     if (currentVolume > 0) {
         currentVolume--;
+        Serial.print("volume: ");
+        Serial.println(currentVolume);
         player.volume(currentVolume);
     }
 }
