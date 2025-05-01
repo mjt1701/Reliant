@@ -1,0 +1,41 @@
+@startuml
+class ButtonHandler {
+  - pin: int
+  - shortPressReported: bool
+  - longPressReported: bool
+  - longPressReleased: bool
+  + update(): void
+  + wasShortPressed(): bool
+  + wasLongPressStart(): bool
+  + wasLongPressEnd(): bool
+}
+
+class LEDStrip {
+  - numLEDs: int
+  - pin: int
+  + fillColor(r: int, g: int, b: int): void
+  + setPixelColor(uint16_t pixelIndex, 
+      uint8_t r, uint8_t g, uint8_t b, uint8_t w): void 
+  + flash(uint8_t minFlashes = 9, uint8_t maxFlashes = 15): void 
+  + clear(): void
+}
+
+class Sound {
+  - volume: int
+  + volumeUp(): void
+  + volumeDown(): void
+  + playSound(file: String): void
+  + setVolume(uint8_t volume): void
+  + getVolume(): uint8_t
+}
+
+class Global {
+  - volumeCooldown: unsigned long
+  - lastInteraction: unsigned long
+  + readEEPROM(): void
+  + writeEEPROM(): void
+}
+
+ButtonHandler "1" -- "1" LEDStrip : provides feedback>
+ButtonHandler "1" -- "1" Sound : controls  >
+@enduml
