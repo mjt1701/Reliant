@@ -31,14 +31,11 @@ refactor to add OOP for led strips and sound
 
 LEDStrip shieldLED(shieldDataPin, shieldLEDnum, SHIELD_LED_TYPE);
 LEDStrip shipLED(shipDataPin, shipLEDnum, SHIP_LED_TYPE); // or NEO_RGBW + NEO_KHZ800 later if needed
-ButtonHandler button(buttonPin, buttonActivated);  //todo remove buttonactivated from object creation
+ButtonHandler button(buttonPin);  
 SoundPlayer sound(rxPin, txPin);
 
 void setup()
 {
-	pinMode(buttonPin, INPUT);	   // Push button pin
-	digitalWrite(buttonPin, HIGH); // turn on internal PullUP resistor
-
 	sound.begin();
 
 	// todo remove or comment out Serial Monitor outputs
@@ -66,11 +63,11 @@ void loop()
 	//	buttonStatus = digitalRead(buttonPin);
 	button.update();
 
-	if (button.wasLongPressStart() && shldState != SET_VOLUME) { 
-		button.reset();  // ✅ Clear any stale button states right before entering SET_VOLUME
-		shldState = SET_VOLUME;
-		Serial.println("LONG PRESS ACTION");
-	}
+	// if (button.wasLongPressStart() && shldState != SET_VOLUME) { 
+	// 	button.reset();  // ✅ Clear any stale button states right before entering SET_VOLUME
+	// 	shldState = SET_VOLUME;
+	// 	Serial.println("LONG PRESS ACTION");
+	// }
 	// Serial.println(shldState);
 	switch (shldState)
 	{
@@ -84,7 +81,7 @@ void loop()
 	case buttonPressFile1: //  wait for buttonpress to start
 	{
 		//	if (buttonStatus == buttonActivated) // Look for button press  ----first time
-		if (button.isShortPress())
+		if (button.wasShortPressed())
 		{
 			shldState = playFile1;
 			Serial.println(shldState);
@@ -104,7 +101,7 @@ void loop()
 	case buttonPressFile2: //  wait for buttonpress  // * more description
 	{
 		//	if (buttonStatus == buttonActivated) // Look for button press  ----first time
-		if (button.isShortPress())
+		if (button.wasShortPressed())
 		{
 			shldState = playFile2;
 			Serial.println(shldState);
@@ -114,8 +111,7 @@ void loop()
 
 	case playFile2: //  button hit to launch scene; play file 2  //todo why the second time thing
 	{
-		//	if (buttonStatus == buttonActivated) // Look for button press  ----second time
-		//	if(button.isShortPress())
+
 		{
 			buttonPressTime = millis();
 			sound.play(mp3File2);
@@ -145,17 +141,13 @@ void loop()
 			shldState = buttonPressFile3;
 			Serial.println(shldState);
 		}
-		else
-		{
-			if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
+		else if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
 			{
-
 				shieldLED.setPixelColor(ledNextTurnOffNum, shieldRedValue, shieldGreenValue, shieldBlueValue, shieldWhiteValue);
-
 				ledNextTurnOffNum++;
 				ledOffTime = millis();
 			}
-		}
+		
 	}
 	break;
 
@@ -163,7 +155,7 @@ void loop()
 	{
 
 		//	if (buttonStatus == buttonActivated) // Look for button press  ----third time
-		if (button.isShortPress())
+		if (button.wasShortPressed())
 		{
 			shldState = playFile3;
 			Serial.println(shldState);
@@ -199,15 +191,13 @@ void loop()
 			shldState = cuePhaserFire;
 			Serial.println(shldState);
 		}
-		else
-		{
-			if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
+		else if ((millis() - ledOffTime > ledOffDelay) || (ledNextTurnOffNum == 0)) // Is it time to turn next light off?
 			{
 				shieldLED.setPixelColor(ledNextTurnOffNum, 0, 0, 0, 0);
 				ledNextTurnOffNum++;
 				ledOffTime = millis();
 			}
-		}
+		
 	}
 	break;
 
@@ -235,12 +225,12 @@ void loop()
 	break;
 
 	case buttonPressFile4: // wait for buttonpress  // * more description
-	{
-		if (buttonStatus == buttonActivated) // Look for button press  ----first time
-		{
-			//	shldState = fullScene;
-		}
-	}
+	// {
+	// 	if (buttonStatus == buttonActivated) // Look for button press  ----first time
+	// 	{
+	// 		//	shldState = fullScene;
+	// 	}
+	// }
 	break;
 
 	case fullScene: // do the entire scene without pause for
@@ -248,75 +238,60 @@ void loop()
 		break;
 	}
 
-	// case SET_VOLUME: // set volume
-	// {
-	// 	sound.stop();
-	// 	shieldLED.clear();
-	// 	shipLED.clear();
-	// 	shipLED.flash();
-	// 	shipLED.flash();
-	// 	shipLED.flash();
-	// 	shipLED.flash();
-	// 	delay(5000);
 
-	// 	shldState= initial;
-	// 	button.reset(); // Prevents unwanted short press being used in next state
-
-	// 	break;
-	// }
 	case SET_VOLUME: {
-		static bool initialized = false;
-		static unsigned long lastInteraction = 0;
-		static unsigned long volumeCooldown = 300;
-		static unsigned long lastVolumeChange = 0;
-		static bool waitingForRelease = false; 
+		// static bool initialized = false;
+		// static unsigned long lastInteraction = 0;
+		// static unsigned long volumeCooldown = 300;
+		// static unsigned long lastVolumeChange = 0;
+		// static bool waitingForRelease = false; 
 	
-		unsigned long now = millis();  // Only get millis() once per loop
+		// unsigned long now = millis();  // Only get millis() once per loop
 	
-		if (!initialized) {
-			Serial.println("Entered SET_VOLUME mode");
-			initialized = true;
-			waitingForRelease = true;
-			lastInteraction = now;
-			button.reset();  // Clear any leftover flags
-			break;           // Exit this loop iteration cleanly
-		}
+		// if (!initialized) {
+		// 	Serial.println("Entered SET_VOLUME mode");
+		// 	initialized = true;
+		// 	waitingForRelease = true;
+		// 	lastInteraction = now;
+		// 	button.reset();  // Clear any leftover flags
+		// 	break;           // Exit this loop iteration cleanly
+		// }
 
-		if (waitingForRelease) {
-			if (button.isPhysicallyReleased()) {
-				waitingForRelease = false;  // Button was released — resume input
-			} else {
-				break;  // Still holding — wait
-			}
-		}
+		// if (waitingForRelease) {
+		// 	if (button.isPhysicallyReleased()) {
+		// 		waitingForRelease = false;  // Button was released — resume input
+		// 	} else {
+		// 		break;  // Still holding — wait
+		// 	}
+		// }
 		
 	
-		// Volume Down – hold
-		if (button.isHeldLong() && (now - lastVolumeChange > volumeCooldown)) {
-			sound.volumeDown();
-			lastVolumeChange = now;
-			lastInteraction = now;
-			Serial.println("Volume DOWN");
-			shipLED.flash();
-			shipLED.flash();
-		}
+		// // Volume Down – hold
+		// if (button.isHeldLong() && (now - lastVolumeChange > volumeCooldown)) {
+		// 	sound.volumeDown();
+		// 	lastVolumeChange = now;
+		// 	lastInteraction = now;
+		// 	Serial.println("Volume DOWN");
+		// 	shipLED.flash();
+		// 	shipLED.flash();
+		// }
 	
-		// Volume Up – short press
-		if (button.isShortPress() && (now - lastVolumeChange > volumeCooldown)) {
-			sound.volumeUp();
-			lastVolumeChange = now;
-			lastInteraction = now;
-			Serial.println("Volume UP");
-			shipLED.flash();
-		}
+		// // Volume Up – short press
+		// if (button.isShortPress() && (now - lastVolumeChange > volumeCooldown)) {
+		// 	sound.volumeUp();
+		// 	lastVolumeChange = now;
+		// 	lastInteraction = now;
+		// 	Serial.println("Volume UP");
+		// 	shipLED.flash();
+		// }
 	
-		// Exit volume mode after inactivity
-		if (now - lastInteraction > 5000) {
-			Serial.println("Exiting SET_VOLUME mode");
-			shldState = initial;
-			initialized = false;
-			button.reset();
-		}
+		// // Exit volume mode after inactivity
+		// if (now - lastInteraction > 5000) {
+		// 	Serial.println("Exiting SET_VOLUME mode");
+		// 	shldState = initial;
+		// 	initialized = false;
+		// 	button.reset();
+		// }
 	
 		break;
 	}
@@ -390,44 +365,3 @@ void loop()
 	}
 	*/
 
-	/*
-	void longButtonHold()
-	{
-		if (buttonStatus == LOW) // Button pressed  //was HIGH in example (prob due to PULL UP)
-		{
-			if (buttonActive == false) // false means the program is detecting the button being pressed for the first time
-			{
-				buttonActive = true;
-				buttonTimer = millis();
-			}
-			if ((millis() - buttonTimer > longPressTime) && (longPressActive == false)) //  it is now a long button press, execute long button press actions
-			{
-				longPressActive = true; // long button press activated, executed actions and now wait for button release
-				// do long button press actions
-				shldState = initial;
-				myDFPlayer.stop();
-				initializeLEDstrips();
-			}
-		}
-		else
-		{ // Button not pressed
-
-			if (buttonActive == true)
-			{ //  first time thru after button released
-
-				if (longPressActive == true)
-				{
-					longPressActive = false;
-				}
-				else
-				{ //  then it was a short click
-
-					// for reliant: continue as normal
-					// todo action taken when short press completed // carry on with normal activity
-				}
-
-				buttonActive = false;
-			}
-		}
-	}
-	*/

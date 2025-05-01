@@ -78,13 +78,9 @@
 #include "ButtonHandler.h"
 
 ButtonHandler::ButtonHandler(uint8_t pin) : pin(pin) {
-    pinMode(pin, INPUT_PULLUP);  // enable internal pull-up
-
-    // Read initial state
-    bool initialState = digitalRead(pin);
-    currentStableState = initialState;
-    lastStableState = initialState;
-    currentState = initialState;  // Only if you’re using isPressed()
+    pinMode(pin, INPUT_PULLUP);
+    currentStableState = digitalRead(pin);
+    lastStableState = currentStableState;
 }
 
 void ButtonHandler::update() {
@@ -107,6 +103,7 @@ void ButtonHandler::update() {
           } else { // Button released
               Serial.println("Debounced State Changed: RELEASED");
               if (!longPressReported && (currentTime - pressStartTime < 1000)) {
+                shortPressReported = true;
                   Serial.println("Short press detected");
               }
           }
@@ -118,6 +115,23 @@ void ButtonHandler::update() {
 }
 
 
-bool ButtonHandler::isPressed() const {
-    return currentState == LOW;
+bool ButtonHandler::wasShortPressed() {
+    if (shortPressReported) {
+        shortPressReported = false;
+        return true;
+    }
+    return false;
+}
+
+void ButtonHandler::reset() {
+    shortPressReported = false;
+    longPressReported = false;
+}
+
+bool ButtonHandler::wasLongPressStart() {
+    if (!longPressReported && currentStableState == LOW && (millis() - pressStartTime >= 1000)) {
+        longPressReported = true;
+        return true;
+    }
+    return false;
 }
