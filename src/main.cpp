@@ -19,22 +19,32 @@ refactor to add OOP for led strips and sound
  
 added volume control basic
 
+addded eeprom for volume level storage
+
+added light flash during volume level change
+
+
 */
 
 #include "Arduino.h"
 #include "SoftwareSerial.h"		 //SOftware Serial Bus to support DFPlayer
 #include "DFRobotDFPlayerMini.h" //DFRobot DFPlayer Library
 #include <Adafruit_NeoPixel.h>	 //Adafruit NeoPixel Library
+#include <EEPROM.h>
 
 #include "global.h"
 #include "LEDStrip.h"
 #include "SoundPlayer.h"
 #include "ButtonHandler.h"
 
+const int VOLUME_EEPROM_ADDR = 0;  //todo move to global
+
 LEDStrip shieldLED(shieldDataPin, shieldLEDnum, SHIELD_LED_TYPE);
 LEDStrip shipLED(shipDataPin, shipLEDnum, SHIP_LED_TYPE); // or NEO_RGBW + NEO_KHZ800 later if needed
 ButtonHandler button(buttonPin);  
 SoundPlayer sound(rxPin, txPin);
+
+void flashVolumeChangeColor(bool up);
 
 void setup()
 {
@@ -56,12 +66,15 @@ void setup()
 
 	shieldLED.clear();
 	shipLED.clear();
+
+	uint8_t savedVol = EEPROM.read(VOLUME_EEPROM_ADDR);
+    savedVol = constrain(savedVol, 0, 30);  // Safety
+    sound.setVolume(savedVol);
 }
 
 // ********************************************* LOOP starts
 void loop()
 {
-	//	buttonStatus = digitalRead(buttonPin);
 	button.update();
 
 	switch (shldState)
@@ -75,7 +88,6 @@ void loop()
 
 	case buttonPressFile1: //  wait for buttonpress to start
 	{
-		//	if (buttonStatus == buttonActivated) // Look for button press  ----first time
 		if (button.wasShortPressed())
 		{
 			shldState = playFile1;
@@ -153,8 +165,6 @@ void loop()
 
 	case buttonPressFile3:
 	{
-
-		//	if (buttonStatus == buttonActivated) // Look for button press  ----third time
 		if (button.wasShortPressed())
 		{
 			shldState = playFile3;
@@ -253,6 +263,9 @@ case SET_VOLUME: {
 			sound.volumeUp();
 			lastVolumeChange = now;
 			lastInteraction = now;
+			shipLED.fillColor(0,255,0,0);
+			delay(500);
+			shipLED.clear();
 			Serial.println("Volume UP");
 		}
 	
@@ -261,13 +274,17 @@ case SET_VOLUME: {
 			sound.volumeDown();
 			lastVolumeChange = now;
 			lastInteraction = now;
+			shipLED.fillColor(255,0,0,0);
+			delay(500);
+			shipLED.clear();
 			Serial.println("Volume DOWN");
 		}
 	
 		// Exit after inactivity
 		if (now - lastInteraction > exitTimeout) {
 			Serial.println("Exiting SET_VOLUME mode");
-	
+			EEPROM.update(VOLUME_EEPROM_ADDR, sound.getVolume());
+			
 			// Do all cleanup here
 			shldState = initial;
 			initialized = false;
@@ -283,5 +300,3 @@ case SET_VOLUME: {
 	}
 
 	} // ==============  END void(loop)
-
-

@@ -14,9 +14,8 @@ public:
     void stop();                       //!  todo for use with long buttonpress 
     void volumeUp();
     void volumeDown();
-    void setVolume(uint8_t vol);
-    void saveVolume();
-    void loadVolume();
+       void setVolume(uint8_t volume);
+    uint8_t getVolume();
 
 private:
     SoftwareSerial serial;

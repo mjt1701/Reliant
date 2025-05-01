@@ -23,12 +23,12 @@ const uint8_t rxPin = 10;		  // Define Arduino connection pin fo software serial
 const uint8_t txPin = 11;		  // Define Arduino connection pin fo software serial tx
 const uint8_t buttonPin = 6;	  // Define Arduino connection pin for button
 const bool buttonActivated = LOW; // Indicate that button pushed is HIGH
-const uint8_t volume = 15;		  // Sound volume for dfPlayer From 0 to 30  //todo change back to 20
+// const uint8_t volume = 15;		  // Sound volume for dfPlayer From 0 to 30  
 
 // Shield LEDs
 const uint8_t shieldDataPin = 3;	 // Define Arduino connection pin for shields LED data
 const uint8_t shieldLEDnum = 8;		 // Define the total number of shields LEDs
-const uint8_t shieldMaxBright = 32;	 // Define maximum shield LED brightness  //todo set final volume
+const uint8_t shieldMaxBright = 32;	 // Define maximum shield LED brightness 
 const uint8_t shieldRedValue = 0;	 // Define the shield LED color RGBW
 const uint8_t shieldGreenValue = 0;	 // Define the shield LED color RGBW
 const uint8_t shieldBlueValue = 255; // Define the shield LED color RGBW
@@ -72,14 +72,7 @@ uint8_t ledNextTurnOffNum = 0; // LED number to turn off in shielddown sequence
 unsigned long buttonPressTime; // Time when button pressed
 unsigned long ledOffTime;	   // Time when previous LED turned off
 unsigned long mp3s2OutTime;	   // ? needed
-unsigned long runOutTime;	   // ? needed
-
-//  long button press
-long buttonTimer = 0;
-long longPressTime = 2000;
-bool buttonStatus;
-bool buttonActive = false;  // detect the first loop after the button has been pressed or released
-bool longPressActive = false;  //allow the code to stop the long press from activating more than once, and will stop the short press function being activated when we release the button after a long press
+unsigned long ruOutTime;	   // ? needed
 
 enum shieldStates
 {
