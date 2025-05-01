@@ -86,6 +86,13 @@ void loop()
 			shldState = playFile1;
 			Serial.println(shldState);
 		}
+
+		if (button.wasLongPressed())
+		{
+			shldState = SET_VOLUME;
+			Serial.println(shldState);
+		}
+
 	}
 	break;
 
@@ -240,6 +247,9 @@ void loop()
 
 
 	case SET_VOLUME: {
+		Serial.println("lets set the volume...");
+		shldState = initial;
+		button.reset();
 		// static bool initialized = false;
 		// static unsigned long lastInteraction = 0;
 		// static unsigned long volumeCooldown = 300;

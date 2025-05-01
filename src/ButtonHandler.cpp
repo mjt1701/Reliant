@@ -84,34 +84,43 @@ ButtonHandler::ButtonHandler(uint8_t pin) : pin(pin) {
 }
 
 void ButtonHandler::update() {
-  bool reading = digitalRead(pin);
-  unsigned long currentTime = millis();
+    bool reading = digitalRead(pin);
+    unsigned long currentTime = millis();
 
-  if (reading != currentStableState) {
-      lastDebounceTime = currentTime;
-      currentStableState = reading;
-  }
+    if (reading != currentStableState) {
+        lastDebounceTime = currentTime;
+        currentStableState = reading;
+    }
 
-  if ((currentTime - lastDebounceTime) > debounceDelay) {
-      if (currentStableState != lastStableState) {
-          lastStableState = currentStableState;
+    if ((currentTime - lastDebounceTime) > debounceDelay) {
+        if (currentStableState != lastStableState) {
+            lastStableState = currentStableState;
 
-          if (currentStableState == LOW) { // Button pressed
-              Serial.println("Debounced State Changed: PRESSED");
-              pressStartTime = currentTime;
-              longPressReported = false;
-          } else { // Button released
-              Serial.println("Debounced State Changed: RELEASED");
-              if (!longPressReported && (currentTime - pressStartTime < 1000)) {
-                shortPressReported = true;
-                  Serial.println("Short press detected");
-              }
-          }
-      } else if (currentStableState == LOW && !longPressReported && (currentTime - pressStartTime >= 1000)) {
-          Serial.println("Long press detected");
-          longPressReported = true;
-      }
-  }
+            if (currentStableState == LOW) {
+                // Button just pressed
+                Serial.println("Debounced State Changed: PRESSED");
+                pressStartTime = currentTime;
+                longPressStarted = false;
+            } else {
+                // Button just released
+                Serial.println("Debounced State Changed: RELEASED");
+                unsigned long pressDuration = currentTime - pressStartTime;
+
+                if (pressDuration > 1000) {
+                    longPressReleased = true;
+                    Serial.println("Long press released");
+                } else {
+                    shortPressReported = true;
+                    Serial.println("Short press detected");
+                }
+            }
+        } else if (currentStableState == LOW) {
+            if (!longPressStarted && (currentTime - pressStartTime >= longPressDuration)) {
+                longPressStarted = true;
+                Serial.println("Long press started");
+            }
+        }
+    }
 }
 
 
@@ -125,12 +134,21 @@ bool ButtonHandler::wasShortPressed() {
 
 void ButtonHandler::reset() {
     shortPressReported = false;
-    longPressReported = false;
+    longPressReleased = false;
+    longPressStarted = false;
 }
 
 bool ButtonHandler::wasLongPressStart() {
-    if (!longPressReported && currentStableState == LOW && (millis() - pressStartTime >= 1000)) {
-        longPressReported = true;
+    if (longPressStarted) {
+        longPressStarted = false;
+        return true;
+    }
+    return false;
+}
+
+bool ButtonHandler::wasLongPressed() {
+    if (longPressReleased) {
+        longPressReleased = false;
         return true;
     }
     return false;
