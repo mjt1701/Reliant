@@ -16,6 +16,8 @@ moved code to  initializeLEDstrips()
 moved code to PlatfomrIO
 
 refactor to add OOP for led strips and sound
+ 
+added volume control basic
 
 */
 
@@ -87,7 +89,7 @@ void loop()
 			button.reset();
 		}
 	}
-//	button.reset();
+
 	break;
 
 	case playFile1: //  turn on file 1, turn on ship lights
@@ -101,7 +103,6 @@ void loop()
 
 	case buttonPressFile2: //  wait for buttonpress  // * more description
 	{
-		//	if (buttonStatus == buttonActivated) // Look for button press  ----first time
 		if (button.wasShortPressed())
 		{
 			shldState = playFile2;
@@ -280,7 +281,7 @@ case SET_VOLUME: {
 	
 
 	}
-		//	}
+
 	} // ==============  END void(loop)
 
 
