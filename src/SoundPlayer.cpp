@@ -17,17 +17,12 @@ void SoundPlayer::begin()
             ; // Halt system
     }
 
-    player.volume(currentVolume); // todo when usiing eeprom: loadVolume(); // Load from EEPROM
+    player.volume(currentVolume);
 }
 
 void SoundPlayer::play(uint8_t fileNumber)
 {
     player.playMp3Folder(fileNumber);
-}
-
-void SoundPlayer::stop()
-{
-    player.stop();
 }
 
 void SoundPlayer::volumeUp()

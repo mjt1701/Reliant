@@ -37,20 +37,17 @@ added light flash during volume level change
 #include "SoundPlayer.h"
 #include "ButtonHandler.h"
 
-const int VOLUME_EEPROM_ADDR = 0;  //todo move to global
+
 
 LEDStrip shieldLED(shieldDataPin, shieldLEDnum, SHIELD_LED_TYPE);
 LEDStrip shipLED(shipDataPin, shipLEDnum, SHIP_LED_TYPE); // or NEO_RGBW + NEO_KHZ800 later if needed
 ButtonHandler button(buttonPin);  
 SoundPlayer sound(rxPin, txPin);
 
-void flashVolumeChangeColor(bool up);
-
 void setup()
 {
 	sound.begin();
 
-	// todo remove or comment out Serial Monitor outputs
 	Serial.begin(9600); // Setup Serial Monitor
 
 	Serial.println("Starting Program");
@@ -299,4 +296,5 @@ case SET_VOLUME: {
 
 	}
 
-	} // ==============  END void(loop)
+	} 
+	// ==============  END void(loop)  =======================

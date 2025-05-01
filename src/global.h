@@ -10,20 +10,12 @@
 
   My Matt Troha
 
-// NeoPixel LED type definitions
-const neoPixelType SHIELD_LED_TYPE = NEO_GRBW + NEO_KHZ800;
-const neoPixelType SHIP_LED_TYPE   = NEO_GRBW + NEO_KHZ800; // change later if needed
-
-
 */
-
-// todo chatgpt says that i can reoove all buton variables
 
 const uint8_t rxPin = 10;		  // Define Arduino connection pin fo software serial rx
 const uint8_t txPin = 11;		  // Define Arduino connection pin fo software serial tx
 const uint8_t buttonPin = 6;	  // Define Arduino connection pin for button
-const bool buttonActivated = LOW; // Indicate that button pushed is HIGH
-// const uint8_t volume = 15;		  // Sound volume for dfPlayer From 0 to 30  
+const int VOLUME_EEPROM_ADDR = 0;  // Define EEPROM loaction for volume
 
 // Shield LEDs
 const uint8_t shieldDataPin = 3;	 // Define Arduino connection pin for shields LED data
@@ -45,7 +37,6 @@ const uint8_t shipBlueValue = 0;	// Define the Ship LED color RGBW
 const uint8_t shipWhiteValue = 255; // Define the Ship LED color RGBW
 const neoPixelType SHIP_LED_TYPE   = NEO_GRBW + NEO_KHZ800; // NeoPixel LED type definitions // change later if needed
 
-
 // mp3 file ID on card
 const int mp3File1 = 1; // mp3 file number of intro
 const int mp3File2 = 2; // mp3 file number of shields going up
@@ -55,7 +46,7 @@ const int mp3File4 = 4; // mp3 file number of full scene
 // Audio timing data
 const unsigned long ledOffDelay = 800;	  // Time until next LED goes on or off
 const unsigned long mp3WaitTime = 483000; // Amount of time to wait from start of mp3-2 and shields go down
-const int afterDelay = 4000;
+// const int afterDelay = 4000;
 const unsigned long runOutMP3s2Time = 17000; // Time from end of shields goind to end of mp3-2
 const unsigned long resetDelay = 5000;		 // Time to delay after mp3-2 ends and retart loop
 
@@ -71,8 +62,6 @@ unsigned long mp3s2Time;	   // Time that mp3 file 2 starts   // ? needed replace
 uint8_t ledNextTurnOffNum = 0; // LED number to turn off in shielddown sequence
 unsigned long buttonPressTime; // Time when button pressed
 unsigned long ledOffTime;	   // Time when previous LED turned off
-unsigned long mp3s2OutTime;	   // ? needed
-unsigned long ruOutTime;	   // ? needed
 
 enum shieldStates
 {
